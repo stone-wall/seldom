@@ -1,5 +1,6 @@
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BroadcastChannel
+import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.RandomUtils
 import org.apache.commons.lang3.SystemUtils
 import org.openqa.selenium.*
@@ -122,7 +123,9 @@ class Chrome constructor(
 //                        driver.findElementByName(labelFor).sendKeys(input)
 //                        return@runBlocking true
 //                    } else
-                        sendKeys(input)
+                    driver.switchTo().activeElement().sendKeys(input)
+
+                    wait(1.seconds)
                     return@runBlocking true
                 }
         }
@@ -176,12 +179,22 @@ fun cortTest() {
         click("Next")
         click("Sign up")
         switchToTab(2)
-        wait(2.minutes)
+        wait(1.minutes.plus(30.seconds))
         val verificationCode = linkText("verification code").replace(" is your Twitter verification code", "")
         switchToTab(1)
         println(verificationCode)
         typeTo(verificationCode, "Verification code")
         click("Next")
+        val password = RandomStringUtils.randomAlphabetic(6, 8)
+        typeTo(password, "Password")
+        click("Next")
+        click("Skip for now")
+        click("Skip for now")
+        click("Skip for now")
+
+        click("Next")
+        click("Skip for now")
+
         wait(5.minutes)
 
 

@@ -2,6 +2,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
+import kotlin.test.assertFails
 import kotlin.test.assertNotNull
 import kotlin.time.ExperimentalTime
 
@@ -31,7 +32,7 @@ class ChromeTests {
         assert(chrome.url == "https://github.com")
         chrome.click("business")
         assert(chrome.url == "https://github.com/enterprise")
-        assert(!chrome.click("this is a fake link"))
+        assertFails {chrome.click("this is a fake link")}
     }
 
     @Test
