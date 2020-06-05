@@ -68,6 +68,7 @@ class ChromeTests {
 
     companion object {
         lateinit var chrome: Chrome
+        val headless by HeadlessChrome()
 
         @BeforeClass
         @JvmStatic

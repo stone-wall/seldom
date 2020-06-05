@@ -1,5 +1,8 @@
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.channels.sendBlocking
+import kotlinx.coroutines.selects.select
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.RandomUtils
 import org.apache.commons.lang3.SystemUtils
@@ -10,6 +13,9 @@ import org.w3c.dom.CharacterData
 import java.awt.datatransfer.Clipboard
 import java.io.File
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.OpenOption
+import java.nio.file.StandardOpenOption
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.absoluteValue
@@ -20,6 +26,8 @@ class HeadlessChrome {
     operator fun getValue(owner: Any, prop: KProperty<*>): Chrome {
         return Chrome(ChromeOptions().setHeadless(true))
     }
+
+
 }
 
 class Chrome constructor(
@@ -49,6 +57,10 @@ class Chrome constructor(
         return ChromeDriver(options)
     }
 
+    private suspend fun fireStartupEvent() {
+        eventBus.send(StartupEvent(this))
+    }
+
 
     init {
         if (opts != null) {
@@ -56,7 +68,9 @@ class Chrome constructor(
         } else {
             this.driver = initDriver()
         }
-        addShutdownHook()
+        launch {
+            fireStartupEvent()
+        }
     }
 
     private fun addShutdownHook() {
@@ -159,17 +173,17 @@ class Chrome constructor(
 
 fun cortTest() {
     val chrome = Chrome()
-    var email = ""
     chrome.run {
+        eventBus.sendBlocking(StartupEvent(chrome))
         go("https://twitter.com")
         click("Sign up")
         click("Use email instead")
         newTab("https://10minutemail.net/")
         switchToTab(2)
+        val email = chrome.textField(0).getAttribute("value")
+        println(email)
         click("Copy to clipboard")
         switchToTab(1)
-
-
         typeTo("Bobby dole", "Name")
         typeTo(Keys.chord(Keys.LEFT_CONTROL, "v"), "Email")
         select("March")
@@ -191,21 +205,32 @@ fun cortTest() {
         click("Skip for now")
         click("Skip for now")
         click("Skip for now")
-
         click("Next")
         click("Skip for now")
-
-        wait(5.minutes)
-
-
-
+        eventBus.sendBlocking(AccountCreated(email, password, email, chrome))
     }
 
 }
 
 @ExperimentalTime
 fun main() {
-    cortTest()
+    runBlocking {
+        async {
+            withContext(Dispatchers.IO) {
+                eventBus.openSubscription().consumeEach {
+                    if (it::class == AccountCreated::class) {
+                        println(it)
+                    }
+                    else {
+                        println("Account creation started")
+                    }
+                }
+            }
+        }
+        launch {
+            cortTest()
+        }
+    }
 }
 
 fun WebElement.below(element: WebElement): Boolean = this.location.y < element.location.y

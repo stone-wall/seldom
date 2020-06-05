@@ -1,7 +1,4 @@
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.openqa.selenium.By
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.WebElement
@@ -73,6 +70,7 @@ interface Driver : CoroutineScope {
             .filter { it.isDisplayed && it.size.height > 0 && it.size.width > 0 }
         return inputClass[position]
     }
+
 
     fun select(option: String) {
         val select = driver.findElements(By.tagName("select"))
